@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 這是繼承父專案，將父 POM 作为 parent -->
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>spring-logistics-system</artifactId> <!-- 父 POM 的 artifactId -->
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath> <!-- 指向父 POM -->
+    </parent>
+
+    <artifactId>logistics-service</artifactId> <!-- 子模組的 artifactId -->
+    <version>0.0.1-SNAPSHOT</version>
+    <name>logistics-service</name>
+    <description>Logistics System Submodule for Spring Boot</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring AMQP Starter: 用於集成 RabbitMQ 的 Spring Boot 起始器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <!-- Spring Data JPA Starter: 用於集成 JPA (Java Persistence API) 和數據庫操作的 Spring Boot 起始器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <!-- Spring Data Redis Reactive Starter: 用於集成基於反應式編程的 Redis 操作的 Spring Boot 起始器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+        <!-- Spring Security Starter: 用於實現 Spring Security 的 Spring Boot 起始器，通常用於處理身份驗證和授權 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!-- Spring Web Starter: 用於支持 Web 開發的 Spring Boot 起始器，包括內嵌的 Tomcat 支持和 RESTful API 建立 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- H2 Database: 用於內存中的 H2 數據庫，適用於開發和測試環境 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope> <!-- 僅在運行時使用 -->
+        </dependency>
+        <!-- MySQL Connector: 用於連接 MySQL 數據庫的驅動程式 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Spring Boot Test Starter: 用於測試的 Spring Boot 起始器，提供測試功能支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Reactor Test: 用於測試基於 Reactor 的反應式編程應用 -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Hibernate Validator: 用於 JSR-303/JSR-380 驗證的 Hibernate 實現，用於驗證對象屬性的合法性 -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        <!-- SpringDoc OpenAPI Starter: 用於生成 OpenAPI 規範的 Spring Boot 起始器，支持自動生成 API 文檔 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.0.2</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+    </build>
+
+</project>
