@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
                 description = "API Documentation for User Service"
         )
 )
+@ComponentScan(basePackages = "com.example")
 public class OpenApiConfig {
     @Bean
     public GroupedOpenApi userApi() {

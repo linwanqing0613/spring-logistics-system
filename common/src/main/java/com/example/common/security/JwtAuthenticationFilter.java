@@ -33,10 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtTokenProvider.isValidToken(token) && !jwtBlackListService.isTokenBlackList(token)) {
-                Claims claims = jwtTokenProvider.getClaims(token);
-
-                String userId = claims.getSubject();
-                String role = claims.get("role", String.class);
+                String userId = jwtTokenProvider.getUserIdFromToken(token);
+                String role = jwtTokenProvider.getRoleFromToken(token);
                 List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);

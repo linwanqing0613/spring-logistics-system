@@ -1,5 +1,6 @@
 package com.example.userservice.controller;
 
+import com.example.common.exception.UnauthorizedException;
 import com.example.userservice.dto.LoginRequestDTO;
 import com.example.common.dto.ResponseDTO;
 import com.example.userservice.dto.UserDTO;
@@ -20,7 +21,7 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<ResponseDTO<Void>> register(@Valid @RequestBody UserDTO userDTO){
         userService.register(userDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(
+        return ResponseEntity.status(HttpStatus.CREATED.value()).body(
                 ResponseDTO.create("User registered successfully", null)
         );
     }
@@ -53,7 +54,7 @@ public class UserController {
     private String extractToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid Authorization header format. Expected 'Bearer <token>'.");
+            throw new UnauthorizedException("Invalid Authorization header format. Expected 'Bearer <token>'.");
         }
         return authHeader.substring(7);
     }

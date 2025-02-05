@@ -12,6 +12,7 @@ public class JwtBlackListServiceImpl implements JwtBlackListService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
     private static final String BLACKLIST_PREFIX = "blacklist:";
 
     @Override

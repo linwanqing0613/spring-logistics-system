@@ -76,5 +76,8 @@ public class ResponseDTO<T> {
     public static <T> ResponseDTO<T> notFound(String message) {
         return new ResponseDTO<>(HttpStatus.NOT_FOUND.value(), message);
     }
+    public static <T> ResponseDTO<T> notFound(String message, T data) {
+        return new ResponseDTO<>(HttpStatus.NOT_FOUND.value(), message, data);
+    }
 }
 

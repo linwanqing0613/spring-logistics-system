@@ -1,12 +1,18 @@
 package com.example.userservice.dto;
 
+import com.example.common.dto.UserRole;
+import com.example.common.dto.UserStatus;
+import jakarta.validation.constraints.NotBlank;
+
 public class UserDTO {
+    @NotBlank(message = "Username cannot be blank")
     private String username;
+    @NotBlank(message = "Password cannot be blank")
     private String password;
     private String email;
     private String phone;
-    private String role;
-    private String status;
+    private String role = UserRole.CUSTOMER.toString();
+    private String status = UserStatus.ACTIVE.toString();
 
     // Constructors
     public UserDTO() {}

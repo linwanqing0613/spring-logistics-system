@@ -1,5 +1,7 @@
 package com.example.userservice.service.impl;
 
+import com.example.common.dto.UserRole;
+import com.example.common.dto.UserStatus;
 import com.example.common.exception.BadRequestException;
 import com.example.common.exception.ForbiddenException;
 import com.example.common.exception.UnauthorizedException;
@@ -41,43 +43,52 @@ public class UserServiceImpl implements UserService {
         log.info("Attempting to register user with username: {}", userDTO.getUsername());
         Optional<User> existingUser = userRepository.findByUsername(userDTO.getUsername());
         if (existingUser.isPresent()) {
-            log.warn("Username already registered: {}", userDTO.getUsername());
+            log.warn("register: Username already registered: {}", userDTO.getUsername());
             throw new BadRequestException("register: Username already registered");
         }
-        User user = new User(
-                uuidProvider.generateUUID(),
-                userDTO.getUsername(),
-                passwordEncoder.encode(userDTO.getPassword()),
-                userDTO.getEmail(),
-                userDTO.getPhone(),
-                userDTO.getRole(),
-                userDTO.getStatus());
+        if (!UserRole.isValidRole(userDTO.getRole())) {
+            log.warn("register: Invalid Role {}", userDTO.getRole());
+            throw new BadRequestException("register: Invalid Role");
+        }
+
+        if (!UserStatus.isValidStatus(userDTO.getStatus())) {
+            log.warn("register: Invalid Status {}", userDTO.getStatus());
+            throw new BadRequestException("register: Invalid Status");
+        }
+        User user = new User();
+        user.setId(uuidProvider.generateUUID());
+        user.setUsername(userDTO.getUsername());
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setEmail(userDTO.getEmail());
+        user.setPhone(userDTO.getPhone());
+        user.setRole(userDTO.getRole());
+        user.setStatus(userDTO.getStatus());
         userRepository.save(user);
-        log.info("User registered successfully with username: {}", userDTO.getUsername());
+        log.info("register: User registered successfully with username: {}", userDTO.getUsername());
     }
 
     @Override
     public String login(LoginRequestDTO loginRequestDTO) {
         log.info("Attempting login for user: {}", loginRequestDTO.getUsername());
         User user = userRepository.findByUsername(loginRequestDTO.getUsername())
-                .orElseThrow(() -> new UnauthorizedException("User not found"));
+                .orElseThrow(() -> new UnauthorizedException("login: User not found"));
 
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
-            log.warn("Invalid credentials for user: {}", loginRequestDTO.getUsername());
-            throw new UnauthorizedException("Invalid credentials");
+            log.warn("login: Invalid credentials for user: {}", loginRequestDTO.getUsername());
+            throw new UnauthorizedException("login: Invalid credentials");
         }
         String token = jwtTokenProvider.generateToken(
                 user.getId(),
                 user.getUsername(),
-                user.getRole().toString()
+                user.getRole()
         );
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(user.getId(),
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority(user.getRole().toString()))
+                        Collections.singletonList(new SimpleGrantedAuthority(user.getRole()))
                 );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.info("User {} logged in successfully with token: {}", user.getUsername(), token);
+        log.info("login: User {} logged in successfully with token: {}", user.getUsername(), token);
         return token;
     }
 
@@ -110,12 +121,12 @@ public class UserServiceImpl implements UserService {
 
         userRepository.delete(user);
         SecurityContextHolder.clearContext();
-        log.info("User account deleted successfully for username: {}", loginRequestDTO.getUsername());
+        log.info("delete User:User account deleted successfully for username: {}", loginRequestDTO.getUsername());
     }
     private User validateUserWithToken(String token, String username) {
         log.info("Validating user with token for username: {}", username);
         if (token == null || !jwtTokenProvider.isValidToken(token)) {
-            log.warn("Invalid or missing token for user: {}", username);
+            log.warn("validate User: Invalid or missing token for user: {}", username);
             throw new UnauthorizedException("validate User: Invalid or missing token");
         }
 
@@ -126,10 +137,10 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UnauthorizedException("validate User: User not found"));
 
         if (!tokenUserId.equals(user.getId()) || !tokenUsername.equals(user.getUsername())) {
-            log.warn("Unauthorized access attempt for user: {} with token: {}", username, token);
+            log.warn("validate User: Unauthorized access attempt for user: {} with token: {}", username, token);
             throw new ForbiddenException("validate User: Unauthorized to perform this operation");
         }
-        log.info("User validation successful for username: {}", username);
+        log.info("validate User: User validation successful for username: {}", username);
         return user;
     }
 }
