@@ -1,5 +1,8 @@
 package com.example.userservice.entity;
 
+import com.example.common.dto.UserRole;
+import com.example.common.dto.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -12,6 +15,7 @@ public class User {
     private String id;
     @Column(name = "username", nullable = false, unique = true)
     private String username;
+    @JsonIgnore
     @Column(name = "password", nullable = false)
     private String password;
     @Column(name = "email", nullable = false)
@@ -19,9 +23,9 @@ public class User {
     @Column(name = "phone")
     private String phone;
     @Column(name = "role", nullable = false)
-    private String role;
+    private String role = UserRole.CUSTOMER.toString();
     @Column(name = "status", nullable = false)
-    private String status;
+    private String status = UserStatus.ACTIVE.toString();
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
@@ -39,7 +43,9 @@ public class User {
 
     public User() {
     }
-
+    public User(String id) {
+        this.id = id;
+    }
     public User(String id, String username, String password, String email, String phone, String role, String status) {
         this.id = id;
         this.username = username;

@@ -5,10 +5,12 @@ import com.example.common.exception.UnauthorizedException;
 import com.example.common.service.JwtBlackListService;
 import com.example.userservice.dto.LoginRequestDTO;
 import com.example.userservice.dto.UserDTO;
+import com.example.userservice.entity.User;
 import com.example.userservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -19,8 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,16 +37,15 @@ class UserControllerTest {
     private JwtBlackListService jwtBlackListService;
     @MockitoBean
     private RedisTemplate<String, Object> redisTemplate;
-
+    @MockitoBean
+    private RabbitTemplate rabbitTemplate;
     @BeforeEach
     void setUp() {
         userService.register(new UserDTO(
                 "testuser",
                 "password123",
                 "test@example.com",
-                "testphone",
-                "testrole",
-                "teststatus")
+                "testphone")
         );
     }
 
@@ -58,9 +58,7 @@ class UserControllerTest {
                           "username": "testuser",
                           "password": "password123",
                           "email": "test@example.com",
-                          "phone": "12345678",
-                          "roles": "test",
-                          "status": "test"
+                          "phone": "12345678"
                         }
                         """))
                 .andExpect(status().isCreated())
@@ -75,12 +73,46 @@ class UserControllerTest {
                         {
                           "username": "testuser",
                           "email": "test@example.com",
-                          "phone": "12345678",
-                          "roles": "test",
-                          "status": "test"
+                          "phone": "12345678"
                         }
                         """))
                 .andExpect(status().isBadRequest());
+    }
+    @Test
+    void testUpdate_Success() throws Exception {
+        String token = "Bearer valid-jwt-token";
+        Mockito.doNothing().when(userService).update(any(UserDTO.class), Mockito.eq(token));
+        Mockito.when(userService.info(token)).thenReturn(new User());
+        mockMvc.perform(put("/api/user/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "username": "testuser",
+                          "password": "password123",
+                          "email": "test@example.com",
+                          "phone": "12345678"
+                        }
+                        """)
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testUpdate_Failure() throws Exception {
+        String token = "invalid-jwt-token";
+        Mockito.doNothing().when(userService).update(any(UserDTO.class), Mockito.eq(token));
+        Mockito.when(userService.info(token)).thenReturn(new User());
+        mockMvc.perform(put("/api/user/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "username": "testuser",
+                          "email": "test@example.com",
+                          "phone": "12345678"
+                        }
+                        """)
+                .header("Authorization", token))
+                .andExpect(status().isUnauthorized());
     }
     @Test
     void testLogin_Success() throws Exception {
@@ -152,7 +184,7 @@ class UserControllerTest {
         String token = "mocked-jwt-token";
         Mockito.doNothing().when(userService).deleteUserAccount(any(LoginRequestDTO.class), Mockito.eq(token));
 
-        mockMvc.perform(delete("/api/user")
+        mockMvc.perform(delete("/api/user/delete")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
@@ -169,7 +201,7 @@ class UserControllerTest {
     void testDeleteUserAccount_Failure_InvalidToken() throws Exception {
         String token = "mocked-jwt-token";
         Mockito.doNothing().when(userService).deleteUserAccount(any(LoginRequestDTO.class), Mockito.eq(token));
-        mockMvc.perform(delete("/api/user")
+        mockMvc.perform(delete("/api/user/delete")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {

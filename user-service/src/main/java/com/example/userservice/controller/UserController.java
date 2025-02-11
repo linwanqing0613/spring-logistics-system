@@ -3,13 +3,17 @@ package com.example.userservice.controller;
 import com.example.common.exception.UnauthorizedException;
 import com.example.userservice.dto.LoginRequestDTO;
 import com.example.common.dto.ResponseDTO;
+import com.example.userservice.dto.OnRegister;
+import com.example.userservice.dto.OnUpdate;
 import com.example.userservice.dto.UserDTO;
+import com.example.userservice.entity.User;
 import com.example.userservice.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,11 +22,31 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @GetMapping("/info")
+    public ResponseEntity<ResponseDTO<User>> info(HttpServletRequest request){
+        String token = extractToken(request);
+        User user = userService.info(token);
+        return ResponseEntity.status(HttpStatus.OK.value()).body(
+                ResponseDTO.success("User get info successfully", user)
+        );
+    }
     @PostMapping("/register")
-    public ResponseEntity<ResponseDTO<Void>> register(@Valid @RequestBody UserDTO userDTO){
+    public ResponseEntity<ResponseDTO<Void>> register(@Validated(OnRegister.class) @RequestBody UserDTO userDTO){
         userService.register(userDTO);
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(
                 ResponseDTO.create("User registered successfully", null)
+        );
+    }
+    @PutMapping("/update")
+    public ResponseEntity<ResponseDTO<User>> update(
+            HttpServletRequest request,
+            @Validated(OnUpdate.class) @RequestBody UserDTO userDTO
+    ){
+        String token = extractToken(request);
+        userService.update(userDTO, token);
+        User user = userService.info(token);
+        return ResponseEntity.status(HttpStatus.OK.value()).body(
+                ResponseDTO.create("User registered successfully", user)
         );
     }
     @PostMapping("/login")
@@ -40,7 +64,7 @@ public class UserController {
                 ResponseDTO.success("User logged out successfully", null)
         );
     }
-    @DeleteMapping
+    @DeleteMapping("/delete")
     public ResponseEntity<ResponseDTO<Void>> deleteUserAccount(
             HttpServletRequest request,
             @Valid @RequestBody LoginRequestDTO loginRequestDTO)

@@ -12,6 +12,7 @@ import com.example.userservice.dto.LoginRequestDTO;
 import com.example.userservice.dto.UserDTO;
 import com.example.userservice.entity.User;
 import com.example.userservice.repository.UserRepository;
+import com.example.userservice.service.UserEventPublisher;
 import com.example.userservice.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,19 @@ public class UserServiceImpl implements UserService {
     private UUIDProvider uuidProvider;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserEventPublisher userEventPublisher;
+
+    @Override
+    public User info(String token) {
+        String userId = validateToken(token);
+        log.info("Attempting to get user with ID: {}", userId);
+        User user= userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("info: User not found"));
+        userEventPublisher.sendUserQueriedEvent(userId);
+        return user;
+    }
+
     @Override
     public void register(UserDTO userDTO) {
         log.info("Attempting to register user with username: {}", userDTO.getUsername());
@@ -46,25 +60,23 @@ public class UserServiceImpl implements UserService {
             log.warn("register: Username already registered: {}", userDTO.getUsername());
             throw new BadRequestException("register: Username already registered");
         }
-        if (!UserRole.isValidRole(userDTO.getRole())) {
-            log.warn("register: Invalid Role {}", userDTO.getRole());
-            throw new BadRequestException("register: Invalid Role");
-        }
-
-        if (!UserStatus.isValidStatus(userDTO.getStatus())) {
-            log.warn("register: Invalid Status {}", userDTO.getStatus());
-            throw new BadRequestException("register: Invalid Status");
-        }
-        User user = new User();
-        user.setId(uuidProvider.generateUUID());
-        user.setUsername(userDTO.getUsername());
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        user.setEmail(userDTO.getEmail());
-        user.setPhone(userDTO.getPhone());
-        user.setRole(userDTO.getRole());
-        user.setStatus(userDTO.getStatus());
+        User user = updateUserFromDTO(uuidProvider.generateUUID(), userDTO);
         userRepository.save(user);
-        log.info("register: User registered successfully with username: {}", userDTO.getUsername());
+        userEventPublisher.sendUserRegisteredEvent(user.getId());
+    }
+
+    @Override
+    public void update(UserDTO userDTO, String token) {
+        log.info("Attempting to update user with username: {}", userDTO.getUsername());
+        Optional<User> existingUser = userRepository.findByUsername(userDTO.getUsername());
+        if (existingUser.isPresent()) {
+            log.warn("update: Username already registered: {}", userDTO.getUsername());
+            throw new BadRequestException("register: Username already registered");
+        }
+        String userId = validateToken(token);
+        User user = updateUserFromDTO(userId, userDTO);
+        userRepository.save(user);
+        userEventPublisher.sendUserUpdatedEvent(userId);
     }
 
     @Override
@@ -82,12 +94,6 @@ public class UserServiceImpl implements UserService {
                 user.getUsername(),
                 user.getRole()
         );
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(user.getId(),
-                        null,
-                        Collections.singletonList(new SimpleGrantedAuthority(user.getRole()))
-                );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("login: User {} logged in successfully with token: {}", user.getUsername(), token);
         return token;
     }
@@ -100,6 +106,7 @@ public class UserServiceImpl implements UserService {
         }
         if (jwtBlackListService.isTokenBlackList(jwtTokenProvider.getJtiFromToken(token))) {
             log.warn("logout: Token already blacklisted. JTI: {}", jwtTokenProvider.getJtiFromToken(token));
+            SecurityContextHolder.clearContext();
             return;
         }
         if (!jwtTokenProvider.isValidToken(token)) {
@@ -117,30 +124,43 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUserAccount(LoginRequestDTO loginRequestDTO, String token) {
         log.info("Attempting to delete user account for username: {}", loginRequestDTO.getUsername());
-        User user = validateUserWithToken(token, loginRequestDTO.getUsername());
+        String userId = validateToken(token);
+        User checkUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("delete User: User not found"));
+        User user = userRepository.findByUsername(loginRequestDTO.getUsername())
+                .orElseThrow(() -> new UnauthorizedException("delete User: User not found"));
 
-        userRepository.delete(user);
-        SecurityContextHolder.clearContext();
-        log.info("delete User:User account deleted successfully for username: {}", loginRequestDTO.getUsername());
-    }
-    private User validateUserWithToken(String token, String username) {
-        log.info("Validating user with token for username: {}", username);
-        if (token == null || !jwtTokenProvider.isValidToken(token)) {
-            log.warn("validate User: Invalid or missing token for user: {}", username);
-            throw new UnauthorizedException("validate User: Invalid or missing token");
-        }
-
-        String tokenUserId = jwtTokenProvider.getUserIdFromToken(token);
-        String tokenUsername = jwtTokenProvider.getUsernameFromToken(token);
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UnauthorizedException("validate User: User not found"));
-
-        if (!tokenUserId.equals(user.getId()) || !tokenUsername.equals(user.getUsername())) {
-            log.warn("validate User: Unauthorized access attempt for user: {} with token: {}", username, token);
+        if (!checkUser.getId().equals(user.getId()) || !checkUser.getUsername().equals(user.getUsername())) {
+            log.warn("delete User: Unauthorized access attempt for user: {} with token: {}", loginRequestDTO.getUsername(), token);
             throw new ForbiddenException("validate User: Unauthorized to perform this operation");
         }
-        log.info("validate User: User validation successful for username: {}", username);
+        userRepository.delete(user);
+        SecurityContextHolder.clearContext();
+        userEventPublisher.sendUserDeletedEvent(user.getId());
+    }
+    private String validateToken(String token) {
+        log.info("Validating user with token");
+        if (token == null || !jwtTokenProvider.isValidToken(token)) {
+            log.warn("validate: Invalid or missing token for user: {}", token);
+            throw new UnauthorizedException("validate User: Invalid or missing token");
+        }
+        String jti = jwtTokenProvider.getJtiFromToken(token);
+        if(jwtBlackListService.isTokenBlackList(jti)){
+            throw new UnauthorizedException("validate User: validate User: token is blacklisted ");
+        }
+        String tokenUserId = jwtTokenProvider.getUserIdFromToken(token);
+
+        log.info("validate: Token validation successful for ID: {}", tokenUserId);
+        return tokenUserId;
+    }
+    private User updateUserFromDTO(String userid, UserDTO userDTO) {
+        User user = userRepository.findById(userid).orElse(new User(userid));
+
+        Optional.ofNullable(userDTO.getUsername()).ifPresent(user::setUsername);
+        Optional.ofNullable(userDTO.getPassword()).ifPresent(pwd -> user.setPassword(passwordEncoder.encode(pwd)));
+        Optional.ofNullable(userDTO.getEmail()).ifPresent(user::setEmail);
+        Optional.ofNullable(userDTO.getPhone()).ifPresent(user::setPhone);
+
         return user;
     }
 }
