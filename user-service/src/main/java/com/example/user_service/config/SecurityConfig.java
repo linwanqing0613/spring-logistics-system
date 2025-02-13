@@ -34,8 +34,9 @@ public class SecurityConfig {
                         .configurationSource(createCorsConfig())
                 )
                 .authorizeHttpRequests(request -> request
+                        .requestMatchers("/api/register", "/api/login").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

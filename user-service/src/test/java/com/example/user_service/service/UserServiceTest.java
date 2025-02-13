@@ -1,5 +1,6 @@
 package com.example.userservice.service;
 
+import com.example.common.dto.ModelName;
 import com.example.common.exception.BadRequestException;
 import com.example.common.exception.ForbiddenException;
 import com.example.common.exception.UnauthorizedException;
@@ -110,7 +111,7 @@ class UserServiceTest {
     @Test
     void testRegister_Success() {
         Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(Optional.empty());
-        Mockito.when(uuidProvider.generateUUID()).thenReturn("UUID");
+        Mockito.when(uuidProvider.generateUUID(ModelName.USER)).thenReturn("UUID");
         Mockito.when(passwordEncoder.encode(Mockito.anyString())).thenReturn("encodedPassword");
 
         userService.register(userDTO);

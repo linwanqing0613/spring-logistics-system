@@ -1,5 +1,6 @@
 package com.example.userservice.service.impl;
 
+import com.example.common.dto.ModelName;
 import com.example.common.dto.UserRole;
 import com.example.common.dto.UserStatus;
 import com.example.common.exception.BadRequestException;
@@ -60,7 +61,7 @@ public class UserServiceImpl implements UserService {
             log.warn("register: Username already registered: {}", userDTO.getUsername());
             throw new BadRequestException("register: Username already registered");
         }
-        User user = updateUserFromDTO(uuidProvider.generateUUID(), userDTO);
+        User user = updateUserFromDTO(uuidProvider.generateUUID(ModelName.USER), userDTO);
         userRepository.save(user);
         userEventPublisher.sendUserRegisteredEvent(user.getId());
     }
