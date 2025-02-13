@@ -1,4 +1,4 @@
-package com.example.userservice.service;
+package com.example.user_service.service;
 
 import com.example.common.dto.ModelName;
 import com.example.common.exception.BadRequestException;
@@ -7,10 +7,10 @@ import com.example.common.exception.UnauthorizedException;
 import com.example.common.security.JwtTokenProvider;
 import com.example.common.service.JwtBlackListService;
 import com.example.common.service.UUIDProvider;
-import com.example.userservice.dto.LoginRequestDTO;
-import com.example.userservice.dto.UserDTO;
-import com.example.userservice.entity.User;
-import com.example.userservice.repository.UserRepository;
+import com.example.user_service.dto.LoginRequestDTO;
+import com.example.user_service.dto.UserDTO;
+import com.example.user_service.entity.User;
+import com.example.user_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;

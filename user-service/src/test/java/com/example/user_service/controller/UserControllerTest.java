@@ -1,12 +1,12 @@
-package com.example.userservice.controller;
+package com.example.user_service.controller;
 
 import com.example.common.config.RedisConfig;
 import com.example.common.exception.UnauthorizedException;
 import com.example.common.service.JwtBlackListService;
-import com.example.userservice.dto.LoginRequestDTO;
-import com.example.userservice.dto.UserDTO;
-import com.example.userservice.entity.User;
-import com.example.userservice.service.UserService;
+import com.example.user_service.dto.LoginRequestDTO;
+import com.example.user_service.dto.UserDTO;
+import com.example.user_service.entity.User;
+import com.example.user_service.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

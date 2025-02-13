@@ -1,4 +1,4 @@
-package com.example.userservice.dto;
+package com.example.user_service.dto;
 
 import com.example.common.dto.UserRole;
 

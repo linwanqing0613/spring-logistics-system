@@ -24,6 +24,8 @@
 
 	<!-- 模塊設定 -->
 	<modules>
+		<module>item-service</module>
+		<module>order-service</module>
 		<module>user-service</module>
 		<module>common</module>
 		<!-- 可以放共享代碼的模塊 -->
@@ -57,7 +59,12 @@
 				<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
 				<version>3.4.2</version>
 			</dependency>
-
+			<!-- Redisson: 是一個基於 Redis 的分布式鎖實現，能夠輕鬆地在多個服務實例之間共享鎖。 -->
+			<dependency>
+				<groupId>org.redisson</groupId>
+				<artifactId>redisson</artifactId>
+				<version>3.35.0</version>
+			</dependency>
 			<!-- Spring Security Starter: 用於實現 Spring Security 的 Spring Boot 起始器，通常用於處理身份驗證和授權 -->
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
@@ -103,6 +110,7 @@
 				<version>3.4.19</version>
 				<scope>test</scope> <!-- 僅在測試階段使用 -->
 			</dependency>
+
 			<!-- Hibernate Validator: 用於 JSR-303/JSR-380 驗證的 Hibernate 實現，用於驗證對象屬性的合法性 -->
 			<dependency>
 				<groupId>org.hibernate.validator</groupId>
@@ -129,6 +137,7 @@
 				<artifactId>jjwt-jackson</artifactId>
 				<version>0.11.5</version>
 			</dependency>
+
 			<!-- SpringDoc OpenAPI Starter: 用於生成 OpenAPI 規範的 Spring Boot 起始器，支持自動生成 API 文檔 -->
 			<dependency>
 				<groupId>org.springdoc</groupId>

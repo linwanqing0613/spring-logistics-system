@@ -1,4 +1,4 @@
-package com.example.userservice.config;
+package com.example.user_service.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;

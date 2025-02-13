@@ -1,30 +1,25 @@
-package com.example.userservice.service.impl;
+package com.example.user_service.service.impl;
 
 import com.example.common.dto.ModelName;
-import com.example.common.dto.UserRole;
-import com.example.common.dto.UserStatus;
 import com.example.common.exception.BadRequestException;
 import com.example.common.exception.ForbiddenException;
 import com.example.common.exception.UnauthorizedException;
 import com.example.common.security.JwtTokenProvider;
 import com.example.common.service.JwtBlackListService;
 import com.example.common.service.UUIDProvider;
-import com.example.userservice.dto.LoginRequestDTO;
-import com.example.userservice.dto.UserDTO;
-import com.example.userservice.entity.User;
-import com.example.userservice.repository.UserRepository;
-import com.example.userservice.service.UserEventPublisher;
-import com.example.userservice.service.UserService;
+import com.example.user_service.dto.LoginRequestDTO;
+import com.example.user_service.dto.UserDTO;
+import com.example.user_service.entity.User;
+import com.example.user_service.repository.UserRepository;
+import com.example.user_service.service.UserEventPublisher;
+import com.example.user_service.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -46,7 +41,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User info(String token) {
         String userId = validateToken(token);
-        log.info("Attempting to get user with ID: {}", userId);
         User user= userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException("info: User not found"));
         userEventPublisher.sendUserQueriedEvent(userId);
@@ -55,7 +49,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void register(UserDTO userDTO) {
-        log.info("Attempting to register user with username: {}", userDTO.getUsername());
         Optional<User> existingUser = userRepository.findByUsername(userDTO.getUsername());
         if (existingUser.isPresent()) {
             log.warn("register: Username already registered: {}", userDTO.getUsername());
@@ -68,7 +61,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void update(UserDTO userDTO, String token) {
-        log.info("Attempting to update user with username: {}", userDTO.getUsername());
         Optional<User> existingUser = userRepository.findByUsername(userDTO.getUsername());
         if (existingUser.isPresent()) {
             log.warn("update: Username already registered: {}", userDTO.getUsername());
@@ -82,7 +74,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String login(LoginRequestDTO loginRequestDTO) {
-        log.info("Attempting login for user: {}", loginRequestDTO.getUsername());
         User user = userRepository.findByUsername(loginRequestDTO.getUsername())
                 .orElseThrow(() -> new UnauthorizedException("login: User not found"));
 
@@ -124,7 +115,6 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public void deleteUserAccount(LoginRequestDTO loginRequestDTO, String token) {
-        log.info("Attempting to delete user account for username: {}", loginRequestDTO.getUsername());
         String userId = validateToken(token);
         User checkUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException("delete User: User not found"));

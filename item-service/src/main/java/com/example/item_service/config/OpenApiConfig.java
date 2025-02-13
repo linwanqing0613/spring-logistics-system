@@ -1,5 +1,4 @@
-package com.example.user_service.config;
-
+package com.example.item_service.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -11,9 +10,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "User Service API",
+                title = "Item Service API",
                 version = "v1",
-                description = "API Documentation for User Service"
+                description = "API Documentation for Item Service"
         )
 )
 @ComponentScan(basePackages = "com.example")
@@ -21,8 +20,8 @@ public class OpenApiConfig {
     @Bean
     public GroupedOpenApi userApi() {
         return GroupedOpenApi.builder()
-                .group("user-service")
-                .packagesToScan("com.example.user_service")
+                .group("item-service")
+                .packagesToScan("com.example.item_service")
                 .build();
     }
 }

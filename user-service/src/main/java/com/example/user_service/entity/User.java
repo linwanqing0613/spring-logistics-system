@@ -1,4 +1,4 @@
-package com.example.userservice.entity;
+package com.example.user_service.entity;
 
 import com.example.common.dto.UserRole;
 import com.example.common.dto.UserStatus;

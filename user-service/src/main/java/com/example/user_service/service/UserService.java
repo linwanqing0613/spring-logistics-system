@@ -1,8 +1,8 @@
-package com.example.userservice.service;
+package com.example.user_service.service;
 
-import com.example.userservice.dto.LoginRequestDTO;
-import com.example.userservice.dto.UserDTO;
-import com.example.userservice.entity.User;
+import com.example.user_service.dto.LoginRequestDTO;
+import com.example.user_service.dto.UserDTO;
+import com.example.user_service.entity.User;
 
 public interface UserService {
     public User info(String token);

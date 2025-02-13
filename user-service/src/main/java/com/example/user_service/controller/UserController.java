@@ -1,13 +1,13 @@
-package com.example.userservice.controller;
+package com.example.user_service.controller;
 
 import com.example.common.exception.UnauthorizedException;
-import com.example.userservice.dto.LoginRequestDTO;
+import com.example.user_service.dto.LoginRequestDTO;
 import com.example.common.dto.ResponseDTO;
-import com.example.userservice.dto.OnRegister;
-import com.example.userservice.dto.OnUpdate;
-import com.example.userservice.dto.UserDTO;
-import com.example.userservice.entity.User;
-import com.example.userservice.service.UserService;
+import com.example.user_service.dto.OnRegister;
+import com.example.user_service.dto.OnUpdate;
+import com.example.user_service.dto.UserDTO;
+import com.example.user_service.entity.User;
+import com.example.user_service.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

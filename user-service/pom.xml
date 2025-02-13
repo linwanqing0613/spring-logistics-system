@@ -13,8 +13,8 @@
 
 	<artifactId>user-service</artifactId> <!-- 子模組的 artifactId -->
 	<version>0.0.1-SNAPSHOT</version>
-	<name>logistics-service</name>
-	<description>Logistics System Submodule for Spring Boot</description>
+	<name>user-service</name>
+	<description>User System module for Spring Boot</description>
 
 	<properties>
 		<java.version>17</java.version>

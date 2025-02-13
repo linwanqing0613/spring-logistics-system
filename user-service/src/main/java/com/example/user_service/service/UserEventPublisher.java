@@ -1,6 +1,6 @@
-package com.example.userservice.service;
+package com.example.user_service.service;
 
-import com.example.userservice.config.RabbitMQConfig;
+import com.example.user_service.config.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
