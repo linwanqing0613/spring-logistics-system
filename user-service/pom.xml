@@ -6,12 +6,12 @@
 	<!-- 這是繼承父專案，將父 POM 作为 parent -->
 	<parent>
 		<groupId>com.example</groupId>
-		<artifactId>spring-logistics-system</artifactId> <!-- 父 POM 的 artifactId -->
+		<artifactId>spring-logistics-system</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath> <!-- 指向父 POM -->
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>user-service</artifactId> <!-- 子模組的 artifactId -->
+	<artifactId>user-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>user-service</name>
 	<description>User System module for Spring Boot</description>
@@ -38,6 +38,10 @@
 			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.redisson</groupId>
+			<artifactId>redisson</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
@@ -58,6 +62,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

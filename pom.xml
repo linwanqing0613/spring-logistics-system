@@ -103,6 +103,13 @@
 				<scope>test</scope> <!-- 僅在測試階段使用 -->
 			</dependency>
 
+			<!-- Spring Security Test Starter: 用於測試的 Spring Security 起始器，提供測試功能支持 -->
+			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-test</artifactId>
+				<version>6.4.2</version>
+				<scope>test</scope>
+			</dependency>
 			<!-- Reactor Test: 用於測試基於 Reactor 的反應式編程應用 -->
 			<dependency>
 				<groupId>io.projectreactor</groupId>

@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.example.item_service", "com.example.common"})
+@ComponentScan(basePackages = {"com.example"})
 public class ItemServerApplication {
 
 	public static void main(String[] args) {

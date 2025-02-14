@@ -5,10 +5,10 @@ import com.example.user_service.dto.UserDTO;
 import com.example.user_service.entity.User;
 
 public interface UserService {
-    public User info(String token);
+    public User info();
     public void register(UserDTO userDTO);
-    public void update(UserDTO userDTO, String token);
+    public void update(UserDTO userDTO);
     public String login(LoginRequestDTO loginRequestDTO);
     public void logout(String token);
-    public void deleteUserAccount(LoginRequestDTO loginRequestDTO, String token);
+    public void deleteUserAccount(LoginRequestDTO loginRequestDTO);
 }

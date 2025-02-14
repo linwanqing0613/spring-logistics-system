@@ -1,5 +1,7 @@
 package com.example.item_service.controller;
 
+import com.example.common.dto.OnRegister;
+import com.example.common.dto.OnUpdate;
 import com.example.common.dto.ResponseDTO;
 import com.example.item_service.dto.ItemDTO;
 import com.example.item_service.entity.Item;
@@ -10,10 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/items")
+@RequestMapping("/api/items")
 public class ItemController {
 
     @Autowired
@@ -23,7 +26,7 @@ public class ItemController {
     @PostMapping(consumes = "application/json",
             produces = "application/json",
             headers = "Authorization")
-    public ResponseEntity<ResponseDTO<Void>> createItem(@Valid @RequestBody ItemDTO itemDTO) {
+    public ResponseEntity<ResponseDTO<Void>> createItem(@RequestHeader("Authorization") String token, @Validated(OnRegister.class) @RequestBody ItemDTO itemDTO) {
         itemService.createItem(itemDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseDTO.create("Item created successfully", null)
@@ -57,7 +60,7 @@ public class ItemController {
             consumes = "application/json",
             produces = "application/json",
             headers = "Authorization")
-    public ResponseEntity<ResponseDTO<Item>> updateItem(@PathVariable String id, @Valid @RequestBody ItemDTO itemDTO) {
+    public ResponseEntity<ResponseDTO<Item>> updateItem(@PathVariable String id, @Validated(OnUpdate.class)  @RequestBody ItemDTO itemDTO) {
         itemDTO.setId(id);
         itemService.updateItem(itemDTO);
         Item updatedItem = itemService.getItemById(id);

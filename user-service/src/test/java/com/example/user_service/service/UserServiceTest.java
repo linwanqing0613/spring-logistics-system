@@ -17,6 +17,8 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -33,6 +35,10 @@ import static org.mockito.Mockito.mockStatic;
 @ActiveProfiles("test")
 @SpringBootTest
 class UserServiceTest {
+    @MockitoBean
+    private SecurityContext securityContext;
+    @MockitoBean
+    private Authentication authentication;
     @Autowired
     private UserService userService;
     @MockitoBean
@@ -48,12 +54,16 @@ class UserServiceTest {
     @MockitoBean
     private UserEventPublisher userEventPublisher;
     private User user;
-    private User user_2;
+    private User existingUser;
     private UserDTO userDTO;
     private LoginRequestDTO loginRequestDTO;
 
     @BeforeEach
     void setUp() {
+
+        SecurityContextHolder.setContext(securityContext);
+        Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
+
         user = new User(
                 "1",
                 "testuser",
@@ -63,7 +73,7 @@ class UserServiceTest {
                 "ROLE_USER",
                 "active"
         );
-        user_2 = new User(
+        existingUser = new User(
                 "2",
                 "testuser2",
                 "password123",
@@ -79,33 +89,24 @@ class UserServiceTest {
                 "123456789"
         );
         loginRequestDTO = new LoginRequestDTO(
-                "testuser2",
-                "password123"
+                existingUser.getUsername(),
+                existingUser.getPassword()
         );
     }
     @Test
     void testInfo_Success() {
-        String token = "valid-jwt-token";
+        Mockito.when(authentication.getName()).thenReturn(user.getId());
         Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(user));
 
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(Mockito.anyString())).thenReturn(user.getId());
-        Mockito.when(jwtTokenProvider.getUsernameFromToken(Mockito.anyString())).thenReturn(user.getUsername());
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(true);
-
-        userService.info(token);
+        userService.info();
         Mockito.verify(userRepository).findById(Mockito.any(String.class));
     }
     @Test
     void testInfo_Failure_IsBlacklist() {
-        String token = "invalid-jwt-token";
+        Mockito.when(authentication.getName()).thenReturn(null);
         Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(user));
 
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(Mockito.anyString())).thenReturn(user.getId());
-        Mockito.when(jwtTokenProvider.getUsernameFromToken(Mockito.anyString())).thenReturn(user.getUsername());
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(false);
-
-        assertThrows(UnauthorizedException.class, () -> userService.info(token));
-        Mockito.verify(jwtBlackListService, Mockito.never()).isTokenBlackList(Mockito.any());
+        assertThrows(UnauthorizedException.class, () -> userService.info());
         Mockito.verify(userEventPublisher, Mockito.never()).sendUserUpdatedEvent(Mockito.any());
     }
     @Test
@@ -120,28 +121,27 @@ class UserServiceTest {
     }
     @Test
     void testUpdate_Success() {
-        String token = "valid-jwt-token";
-        Mockito.when(jwtTokenProvider.isValidToken(token)).thenReturn(true);
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(token)).thenReturn(user.getId());
-        Mockito.when(userRepository.findByUsername(userDTO.getUsername())).thenReturn(Optional.empty());
+        Mockito.when(authentication.getName()).thenReturn(user.getId());
+
         Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.findByUsername(userDTO.getUsername())).thenReturn(Optional.empty());
         Mockito.when(passwordEncoder.encode(userDTO.getPassword())).thenReturn("encodedPassword");
 
 
-        userService.update(userDTO, token);
+        userService.update(userDTO);
         Mockito.verify(userRepository).save(Mockito.any(User.class));
         Mockito.verify(userEventPublisher).sendUserUpdatedEvent(Mockito.anyString());
     }
     @Test
     void testUpdate_Failure_UsernameAlreadyExists() {
-        String token = "valid-jwt-token";
-        Mockito.when(jwtTokenProvider.isValidToken(token)).thenReturn(true);
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(token)).thenReturn(user.getId());
-        Mockito.when(userRepository.findByUsername(userDTO.getUsername())).thenReturn(Optional.of(user_2));
+        Mockito.when(authentication.getName()).thenReturn(user.getId());
+
         Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.findByUsername(userDTO.getUsername())).thenReturn(Optional.of(existingUser));
         Mockito.when(passwordEncoder.encode(userDTO.getPassword())).thenReturn("encodedPassword");
 
-        assertThrows(BadRequestException.class, () -> userService.update(userDTO, Mockito.any(String.class)));
+        assertThrows(BadRequestException.class, () -> userService.update(userDTO));
+
         Mockito.verify(userRepository, Mockito.never()).save(Mockito.any());
         Mockito.verify(userEventPublisher, Mockito.never()).sendUserUpdatedEvent(Mockito.any());
     }
@@ -156,18 +156,22 @@ class UserServiceTest {
         assertEquals("mocked-jwt-token", token);
     }
     @Test
-    void testLogin_Failure_WrongPassword() {
-        Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(Optional.of(user));
-        Mockito.when(passwordEncoder.matches(Mockito.anyString(), Mockito.anyString())).thenReturn(false);
+    void testLogin_Failure_UserNotFound() {
+        Mockito.when(userRepository.findByUsername(loginRequestDTO.getUsername())).thenReturn(Optional.empty());
 
         assertThrows(UnauthorizedException.class, () -> userService.login(loginRequestDTO));
     }
+    @Test
+    void testLogin_Failure_InvalidPassword() {
+        Mockito.when(userRepository.findByUsername(loginRequestDTO.getUsername())).thenReturn(Optional.of(user));
+        Mockito.when(passwordEncoder.matches(Mockito.any(), Mockito.any())).thenReturn(false);
 
+        assertThrows(UnauthorizedException.class, () -> userService.login(loginRequestDTO));
+    }
     @Test
     void testLogout_Success() {
         String token = "valid-jwt-token";
 
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtTokenProvider.getJtiFromToken(Mockito.anyString())).thenReturn("mocked-jti");
         Mockito.when(jwtTokenProvider.getExpirationFromToken(Mockito.anyString())).thenReturn(3600L);
 
@@ -178,6 +182,7 @@ class UserServiceTest {
     @Test
     void testLogout_Failure_InvalidToken() {
         String token = "invalid-jwt-token";
+
         Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(false);
         try (MockedStatic<SecurityContextHolder> mockedStatic = mockStatic(SecurityContextHolder.class)) {
             userService.logout(token);
@@ -187,54 +192,31 @@ class UserServiceTest {
 
     @Test
     void testDeleteUserAccount_Success() {
-        String token = "valid-jwt-token";
-
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(true);
+        Mockito.when(authentication.getName()).thenReturn(user.getId());
         Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(user));
         Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(Optional.of(user));
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(Mockito.anyString())).thenReturn(user.getId());
-        Mockito.when(jwtTokenProvider.getUsernameFromToken(Mockito.anyString())).thenReturn(user.getUsername());
 
-        userService.deleteUserAccount(loginRequestDTO, token);
+        userService.deleteUserAccount(loginRequestDTO);
 
         Mockito.verify(userRepository).delete(Mockito.any(User.class));
     }
     @Test
     void testDeleteUserAccount_Failure_Forbidden() {
-        String token = "valid-jwt-token";
-
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(true);
-        Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(user_2));
+        String wrongId = "wrong-user-id";
+        Mockito.when(authentication.getName()).thenReturn(wrongId);
+        Mockito.when(userRepository.findById(Mockito.anyString())).thenReturn(Optional.of(new User(wrongId)));
         Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(Optional.of(user));
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(Mockito.anyString())).thenReturn("wrong-user-id");
-        Mockito.when(jwtTokenProvider.getUsernameFromToken(Mockito.anyString())).thenReturn(user.getUsername());
 
-        assertThrows(ForbiddenException.class, () -> userService.deleteUserAccount(loginRequestDTO, token));
+        assertThrows(ForbiddenException.class, () -> userService.deleteUserAccount(loginRequestDTO));
 
         Mockito.verify(userRepository, Mockito.never()).delete(Mockito.any());
         Mockito.verify(userEventPublisher, Mockito.never()).sendUserUpdatedEvent(Mockito.any());
     }
     @Test
     void testDeleteUserAccount_Failure_InvalidToken() {
-        String token = "invalid-jwt-token";
+        Mockito.when(authentication.getName()).thenReturn(null);
 
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(false);
-
-        assertThrows(UnauthorizedException.class, () -> userService.deleteUserAccount(loginRequestDTO, token));
-
-        Mockito.verify(userRepository, Mockito.never()).delete(Mockito.any());
-        Mockito.verify(userEventPublisher, Mockito.never()).sendUserUpdatedEvent(Mockito.any());
-    }
-
-    @Test
-    void testDeleteUserAccount_Failure_UserNotFound() {
-        String token = "valid-jwt-token";
-        Mockito.when(jwtTokenProvider.isValidToken(Mockito.anyString())).thenReturn(true);
-        Mockito.when(jwtTokenProvider.getUserIdFromToken(Mockito.anyString())).thenReturn("mocked-id");
-        Mockito.when(jwtTokenProvider.getUsernameFromToken(Mockito.anyString())).thenReturn("testuser");
-        Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(Optional.empty());
-
-        assertThrows(UnauthorizedException.class, () -> userService.deleteUserAccount(loginRequestDTO, token));
+        assertThrows(UnauthorizedException.class, () -> userService.deleteUserAccount(loginRequestDTO));
 
         Mockito.verify(userRepository, Mockito.never()).delete(Mockito.any());
         Mockito.verify(userEventPublisher, Mockito.never()).sendUserUpdatedEvent(Mockito.any());

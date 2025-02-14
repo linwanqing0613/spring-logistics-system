@@ -4,8 +4,10 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -13,9 +15,13 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
-    private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256); // 自動生成密鑰
-    private final long expirationMillis = 3600000; // Token 有效期 (1 小時)
-
+    @Value("${jwt.secret}")
+    private String secretKey;
+    @Value("${jwt.expiration}")
+    private long expirationMillis;
+    private SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
     public String generateToken(String userId, String username, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMillis);
@@ -27,7 +33,7 @@ public class JwtTokenProvider {
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -81,7 +87,7 @@ public class JwtTokenProvider {
      */
     private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+                .setSigningKey(getSecretKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
